@@ -13,13 +13,18 @@ app.use(express.json({ limit: '10mb' }));
 // Serve static frontend files from 'public' directory
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Path for local JSON database
-const DB_DIR = path.join(__dirname, 'data');
+// Path for local JSON database (use /tmp on Vercel since the deployment directory is read-only)
+const isVercel = !!process.env.VERCEL;
+const DB_DIR = isVercel ? '/tmp' : path.join(__dirname, 'data');
 const DB_FILE = path.join(DB_DIR, 'db.json');
 
 // Ensure database directory exists
 if (!fs.existsSync(DB_DIR)) {
-  fs.mkdirSync(DB_DIR, { recursive: true });
+  try {
+    fs.mkdirSync(DB_DIR, { recursive: true });
+  } catch (err) {
+    console.error("데이터 디렉토리 생성 실패:", err);
+  }
 }
 
 /**
@@ -147,9 +152,13 @@ app.get('*', (req, res) => {
 });
 
 // Start Server
-app.listen(PORT, () => {
-  console.log(`=======================================================`);
-  console.log(` 🏆 클래스매치(ClassMatch) 대시보드가 정상 구동되었습니다.`);
-  console.log(` ▶ 로컬 서버 주소: http://localhost:${PORT}`);
-  console.log(`=======================================================`);
-});
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`=======================================================`);
+    console.log(` 🏆 클래스매치(ClassMatch) 대시보드가 정상 구동되었습니다.`);
+    console.log(` ▶ 로컬 서버 주소: http://localhost:${PORT}`);
+    console.log(`=======================================================`);
+  });
+}
+
+module.exports = app;
