@@ -103,6 +103,7 @@ const DOM = {
   syncDetailsBlock: document.getElementById('sync-details-block'),
   settingsSyncUrl: document.getElementById('settings-sync-url'),
   settingsSyncCode: document.getElementById('settings-sync-code'),
+  settingsCopyShareUrl: document.getElementById('settings-copy-share-url'),
   settingsTestConnection: document.getElementById('settings-test-connection'),
   connectionTestResult: document.getElementById('connection-test-result'),
   settingsOldPassword: document.getElementById('settings-old-password'),
@@ -672,6 +673,52 @@ function migrateOldMannersData() {
 }
 
 async function loadData() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const urlCode = urlParams.get('code');
+
+  if (urlCode) {
+    const sanitizedCode = urlCode.replace(/[^a-zA-Z0-9-_]/g, '');
+    if (sanitizedCode) {
+      const syncUrl = window.location.origin;
+      try {
+        setServerStatus('loading');
+        const res = await fetch(`${syncUrl}/api/data?code=${encodeURIComponent(sanitizedCode)}`);
+        if (res.ok) {
+          const remoteState = await res.json();
+          if (remoteState && remoteState.config) {
+            state = remoteState;
+            state.config.syncEnabled = true;
+            state.config.syncCode = sanitizedCode;
+            state.config.syncUrl = syncUrl;
+            migrateOldMannersData();
+            saveStateLocally();
+            setServerStatus('connected');
+            return;
+          } else {
+            // 서버에 아직 저장된 데이터가 없는 경우, 기본 동기화 설정을 저장해두고 마법사를 보여줍니다.
+            const initialSyncConfig = {
+              syncEnabled: true,
+              syncCode: sanitizedCode,
+              syncUrl: syncUrl,
+              adminPassword: DEFAULT_PASSWORD
+            };
+            localStorage.setItem('classmatch_config', JSON.stringify(initialSyncConfig));
+            localStorage.removeItem('classmatch_teams');
+            localStorage.removeItem('classmatch_matches');
+            state.config = null;
+            state.teams = [];
+            state.matches = [];
+            setServerStatus('local');
+            return;
+          }
+        }
+      } catch (err) {
+        console.error("원격 서버 데이터 로드 실패.", err);
+        setServerStatus('disconnected');
+      }
+    }
+  }
+
   const localConfigStr = localStorage.getItem('classmatch_config');
   if (localConfigStr) {
     const tempConfig = JSON.parse(localConfigStr);
@@ -1486,6 +1533,9 @@ function handleWizardGenerate() {
     matches = generateTournamentBracket(teams, false, thirdPlaceEnabled);
   }
 
+  const localConfigStr = localStorage.getItem('classmatch_config');
+  const savedConfig = localConfigStr ? JSON.parse(localConfigStr) : null;
+
   const config = {
     title,
     sport,
@@ -1496,10 +1546,10 @@ function handleWizardGenerate() {
     playoffQualifiers: DOM.wizardPlayoffQualifiers.value,
     leagueRepeats: leagueRepeats,
     thirdPlaceEnabled: format === 'hybrid' ? DOM.wizard3rdPlaceToggle.checked : (format === 'tournament' ? DOM.wizard3rdPlaceTournamentToggle.checked : false),
-    syncEnabled: state.config ? state.config.syncEnabled : false,
-    syncUrl: state.config && state.config.syncUrl ? state.config.syncUrl : window.location.origin,
-    syncCode: state.config && state.config.syncCode ? state.config.syncCode : '',
-    adminPassword: state.config ? state.config.adminPassword : DEFAULT_PASSWORD
+    syncEnabled: state.config ? state.config.syncEnabled : (savedConfig ? savedConfig.syncEnabled : false),
+    syncUrl: state.config && state.config.syncUrl ? state.config.syncUrl : (savedConfig && savedConfig.syncUrl ? savedConfig.syncUrl : window.location.origin),
+    syncCode: state.config && state.config.syncCode ? state.config.syncCode : (savedConfig && savedConfig.syncCode ? savedConfig.syncCode : ''),
+    adminPassword: state.config ? state.config.adminPassword : (savedConfig ? savedConfig.adminPassword : DEFAULT_PASSWORD)
   };
 
   state.config = config;
@@ -1610,6 +1660,7 @@ function registerModalEvents() {
   });
 
   DOM.settingsTestConnection.addEventListener('click', handleTestServerConnection);
+  DOM.settingsCopyShareUrl.addEventListener('click', handleCopyShareUrl);
   DOM.settingsChangePasswordBtn.addEventListener('click', handleSaveNewPassword);
   DOM.settingsExportBtn.addEventListener('click', handleExportBackup);
   DOM.settingsExportExcelBtn.addEventListener('click', handleExportExcel);
@@ -1909,6 +1960,33 @@ async function handleTestServerConnection() {
     DOM.connectionTestResult.className = 'test-result-msg test-fail';
     DOM.connectionTestResult.textContent = '❌ 연결 실패. 서버 구동 상태나 CORS 설정을 확인해 주십시오.';
   }
+}
+
+function handleCopyShareUrl() {
+  const codeVal = DOM.settingsSyncCode.value.trim().replace(/[^a-zA-Z0-9-_]/g, '');
+  if (!codeVal) {
+    alert("먼저 우리 학교 코드를 영어나 숫자로 입력한 뒤 복사해 주세요.");
+    return;
+  }
+
+  const shareUrl = `${window.location.origin}${window.location.pathname}?code=${encodeURIComponent(codeVal)}`;
+
+  navigator.clipboard.writeText(shareUrl).then(() => {
+    alert(`✅ 공유 주소가 클립보드에 복사되었습니다!\n\n동료 선생님들께 이 주소를 전달하면, 설정할 필요 없이 '${codeVal}' 학교 코드로 바로 자동 연결됩니다.\n\n주소: ${shareUrl}`);
+  }).catch(err => {
+    console.error("클립보드 복사 실패. 대체 복사 시도.", err);
+    try {
+      const tempInput = document.createElement("input");
+      tempInput.value = shareUrl;
+      document.body.appendChild(tempInput);
+      tempInput.select();
+      document.execCommand("copy");
+      document.body.removeChild(tempInput);
+      alert(`✅ 공유 주소가 복사되었습니다!\n\n동료 선생님들께 이 주소를 전달하면, 설정할 필요 없이 '${codeVal}' 학교 코드로 바로 자동 연결됩니다.\n\n주소: ${shareUrl}`);
+    } catch (e) {
+      alert(`복사에 실패했습니다. 아래 주소를 직접 복사해 주세요:\n\n${shareUrl}`);
+    }
+  });
 }
 
 async function handleSaveNewPassword() {
