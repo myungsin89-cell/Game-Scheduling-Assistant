@@ -1,0 +1,24 @@
+{
+  "name": "classmatch",
+  "version": "1.0.0",
+  "description": "학년/학급 스포츠 경기 리그 및 토너먼트 대시보드 - 클래스매치",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "sports",
+    "dashboard",
+    "scoreboard",
+    "tournament",
+    "league",
+    "school"
+  ],
+  "author": "Antigravity",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2"
+  }
+}

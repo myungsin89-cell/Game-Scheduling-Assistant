@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>경기배정도우미 - 스포츠 대시보드</title>
+  <!-- Google Fonts: Outfit, Noto Sans KR -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- APP CONTAINER -->
+  <div id="app" class="app-container">
+    
+    <!-- TOP NAVBAR -->
+    <header class="navbar">
+      <div class="nav-left">
+        <div class="logo">
+          <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M8 12h8M12 8v8"></path>
+          </svg>
+          <span class="logo-text">경기배정<span>도우미</span></span>
+        </div>
+        <div id="server-badge" class="sync-badge local-mode">
+          <span class="badge-dot"></span>
+          <span class="badge-text">로컬 저장 모드</span>
+        </div>
+      </div>
+
+      <div class="nav-right">
+        <!-- Theme Toggle (Keeping it for accessibility, defaults to light) -->
+        <button id="theme-toggle-btn" class="icon-btn" title="테마 변경" aria-label="Toggle Theme" style="display: none;">
+          <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          </svg>
+        </button>
+
+        <!-- Admin Control -->
+        <button id="admin-login-btn" class="btn btn-outline admin-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+          <span>관리자 로그인</span>
+        </button>
+
+        <!-- Admin Logged In User Indicator -->
+        <div id="admin-badge" class="admin-badge" style="display: none;">
+          <span>관리자 모드</span>
+          <button id="admin-logout-btn" class="logout-btn" title="로그아웃">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"></path>
+            </svg>
+          </button>
+        </div>
+
+        <!-- App Settings -->
+        <button id="settings-open-btn" class="icon-btn" title="설정">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- SETUP WIZARD (Visible when no configuration exists) -->
+    <main id="setup-wizard" class="wizard-container board-card" style="display: none;">
+      <div class="wizard-header">
+        <h2>🏆 경기배정도우미 설정 마법사</h2>
+        <p>간편하게 참가 팀을 넣고 리그전/토너먼트 대진을 자동 생성합니다.</p>
+        
+        <div class="wizard-steps">
+          <div class="step-indicator active" data-step="1">1. 대회 및 조 설정</div>
+          <div class="step-indicator" data-step="2">2. 팀 입력 및 경기 방식</div>
+        </div>
+      </div>
+
+      <!-- WIZARD STEP 1: General Info & Groups -->
+      <div class="wizard-step-content active" data-step="1">
+        <h3>1단계: 기본 정보 입력</h3>
+        <div class="grid grid-2">
+          <div class="form-group">
+            <label for="wizard-title">대회 이름</label>
+            <input type="text" id="wizard-title" placeholder="예: 4학년 피구 리그전, 가을 체육대회" value="학년 스포츠 대회">
+          </div>
+          <div class="form-group">
+            <label for="wizard-sport">경기 종목</label>
+            <input type="text" id="wizard-sport" placeholder="예: 피구, 축구, 배드민턴" value="피구">
+          </div>
+        </div>
+
+        <div class="grid grid-2" style="margin-top: 10px;">
+          <div class="form-group">
+            <label for="wizard-groups-count">조(League) 개수</label>
+            <select id="wizard-groups-count">
+              <option value="1" selected>1개 조 (전체 단일 리그전)</option>
+              <option value="2">2개 조 (A조 / B조)</option>
+              <option value="3">3개 조 (A조 / B조 / C조)</option>
+              <option value="4">4개 조 (A조 / B조 / C조 / D조)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>조별 세부 명칭</label>
+            <div id="group-names-container" class="grid grid-2-simple">
+              <!-- Dynamically rendered group name inputs -->
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group checkbox-group" style="margin-top: 15px;">
+          <label class="toggle-switch">
+            <input type="checkbox" id="wizard-special-toggle" checked>
+            <span class="slider"></span>
+          </label>
+          <div class="checkbox-label-block">
+            <span class="checkbox-title">특별 점수 및 시상 부문(Custom Special Scores) 활성화</span>
+            <span class="checkbox-desc">질서점수, 배려점수, 벌점 등 학급별 특별 시상 부문을 활성화하고 대시보드에 순위표를 제공합니다.</span>
+          </div>
+        </div>
+
+        <div id="special-scores-wizard-container" class="form-group" style="margin-top: 12px;">
+          <label for="wizard-special-input">특별 시상 부문 명칭 입력 (쉼표로 구분)</label>
+          <input type="text" id="wizard-special-input" placeholder="예: 질서 점수, 배려 점수, 벌점" value="질서 점수, 배려 점수">
+          <p class="input-helper">대회 목적에 맞는 시상 명칭들을 쉼표로 구분해 입력하세요. 벌점, 경고 등이 포함되면 낮은 점수가 1위로 자동 처리됩니다.</p>
+        </div>
+
+        <div class="wizard-navigation">
+          <div></div> <!-- Spacer -->
+          <button class="btn btn-primary next-step-btn">다음 단계로</button>
+        </div>
+      </div>
+
+      <!-- WIZARD STEP 2: Teams & Competition Format -->
+      <div class="wizard-step-content" data-step="2">
+        <h3>2단계: 참가 팀 목록 등록 및 방식 선택</h3>
+        
+        <div class="grid grid-2">
+          <!-- Left: Teams Textarea -->
+          <div class="form-group">
+            <label for="wizard-teams-textarea">참가 팀 이름 입력</label>
+            <p class="input-helper">한 줄에 한 팀씩 입력하세요. (최대 32개 팀)</p>
+            <textarea id="wizard-teams-textarea" rows="7" placeholder="예:&#10;1반&#10;2반&#10;3반&#10;4반&#10;5반\n6반"></textarea>
+            <button type="button" id="wizard-auto-fill-btn" class="btn btn-outline btn-sm" style="margin-top: 8px; align-self: flex-start;">예시 팀 자동 입력</button>
+          </div>
+
+          <!-- Right: Format selector -->
+          <div class="form-group">
+            <label>경기 진행 방식 선택</label>
+            <div class="format-card-grid-simple">
+              <label class="format-card-simple">
+                <input type="radio" name="wizard-format" value="league" checked>
+                <div class="format-card-inner-simple">
+                  <span class="format-title-simple">📅 풀 리그전 (Round Robin)</span>
+                  <p class="input-helper">모든 팀이 한 번씩 골고루 맞붙어 순위를 결정합니다.</p>
+                </div>
+              </label>
+
+              <label class="format-card-simple">
+                <input type="radio" name="wizard-format" value="tournament">
+                <div class="format-card-inner-simple">
+                  <span class="format-title-simple">🏆 단판 토너먼트 (Knockout)</span>
+                  <p class="input-helper">승자 진출, 패자 즉시 탈락 구조의 대진표를 만듭니다.</p>
+                </div>
+              </label>
+
+              <label class="format-card-simple">
+                <input type="radio" name="wizard-format" value="hybrid">
+                <div class="format-card-inner-simple">
+                  <span class="format-title-simple">🔥 예선 리그 + 결선 토너먼트</span>
+                  <p class="input-helper">조별 리그 완료 후 각 조의 상위 팀들이 모여 결선을 치릅니다.</p>
+                </div>
+              </label>
+            </div>
+
+            <!-- League Options block -->
+            <div id="league-options-block" class="settings-sub-block" style="margin-top: 12px;">
+              <label for="wizard-league-repeats" style="font-size: 13px;">리그전 경기 반복 횟수 (예선 회수)</label>
+              <select id="wizard-league-repeats" style="padding: 8px; font-size: 13px; margin-top: 6px;">
+                <option value="1" selected>단판 리그전 (각 팀과 1경기씩)</option>
+                <option value="2">더블 리그전 (각 팀과 2경기씩 - 홈 & 어웨이)</option>
+                <option value="3">3순환 리그전 (각 팀과 3경기씩)</option>
+                <option value="4">4순환 리그전 (각 팀과 4경기씩)</option>
+              </select>
+            </div>
+
+            <!-- Hybrid Options block -->
+            <div id="hybrid-options-block" class="settings-sub-block" style="display: none; margin-top: 12px;">
+              <label for="wizard-playoff-qualifiers" style="font-size: 13px;">각 조별 결선 토너먼트 진출 팀 수</label>
+              <select id="wizard-playoff-qualifiers" style="padding: 8px; font-size: 13px; margin-top: 6px;">
+                <option value="1">각 조 1위만 결선 진출</option>
+                <option value="2" selected>각 조 1, 2위 진출 (4강 또는 8강 결선)</option>
+                <option value="3">각 조 1, 2, 3위 진출</option>
+                <option value="4">각 조 1, 2, 3, 4위 진출</option>
+              </select>
+              <label class="checkbox-container" style="margin-top: 12px; margin-bottom: 0; font-size: 13px;">
+                <input type="checkbox" id="wizard-3rd-place-toggle" checked>
+                <span class="checkmark"></span>
+                <span>🥉 결선 3·4위 결정전 매치 추가 생성</span>
+              </label>
+            </div>
+
+            <!-- Tournament Options block -->
+            <div id="tournament-options-block" class="settings-sub-block" style="display: none; margin-top: 12px;">
+              <label class="checkbox-container" style="margin-bottom: 0; font-size: 13px;">
+                <input type="checkbox" id="wizard-3rd-place-tournament-toggle" checked>
+                <span class="checkmark"></span>
+                <span>🥉 3·4위 결정전 매치 추가 생성</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Assignments Preview Tag Box -->
+        <div class="form-group" style="margin-top: 15px;">
+          <label>조별 배정 가시화</label>
+          <div id="group-assignment-preview" class="group-preview-grid">
+            <!-- Dynamically populated group allocation preview tags -->
+          </div>
+        </div>
+
+        <div class="warning-alert" style="padding: 12px; margin-bottom: 15px; margin-top: 15px;">
+          <strong>💡 알림:</strong> 대진 생성 버튼을 누르면 리그의 대진표 목록이 즉시 생성되며, 경기는 순서와 날짜에 제한 없이 임의로 진행하고 기록할 수 있습니다.
+        </div>
+
+        <div class="wizard-navigation">
+          <button class="btn btn-outline prev-step-btn">이전 단계</button>
+          <button class="btn btn-success" id="wizard-generate-btn">🌟 경기 대진 생성 및 대시보드 열기</button>
+        </div>
+      </div>
+    </main>
+
+    <!-- DASHBOARD PANEL (Visible after configuration exists) -->
+    <main id="dashboard" class="dashboard-container" style="display: none;">
+      
+      <!-- HERO HEADER CARD -->
+      <section class="dashboard-hero board-card">
+        <div class="hero-left">
+          <span class="hero-badge" id="hero-sport-badge">피구</span>
+          <h1 id="hero-title" class="hero-title">피구 리그 게시판</h1>
+          <p id="hero-subtitle" class="hero-subtitle">실시간 조별 순위와 경기 결과를 중계합니다.</p>
+        </div>
+        <div class="hero-right">
+          <div class="stat-circle">
+            <div class="stat-number" id="progress-percent">0%</div>
+            <div class="stat-label">진행률</div>
+          </div>
+          <div class="hero-stat-details">
+            <div>총 경기: <strong id="total-matches-count">0</strong></div>
+            <div>완료됨: <strong id="completed-matches-count">0</strong></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- NAVIGATION TABS -->
+      <nav class="dashboard-tabs">
+        <button class="tab-btn active" data-tab="tab-standings">
+          <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 20V10M18 20V4M6 20v-6"></path>
+          </svg>
+          <span>리그 순위표</span>
+        </button>
+        <button class="tab-btn" data-tab="tab-schedule">
+          <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+          </svg>
+          <span>경기 목록 및 결과 입력</span>
+        </button>
+        <button class="tab-btn" data-tab="tab-bracket" id="tab-btn-bracket" style="display: none;">
+          <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1zM4 22v-7"></path>
+          </svg>
+          <span>결선 토너먼트 대진표</span>
+        </button>
+        <button class="tab-btn" data-tab="tab-manners" id="tab-btn-manners" style="display: none;">
+          <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path>
+          </svg>
+          <span>특별 부문 순위</span>
+        </button>
+      </nav>
+
+      <!-- TAB CONTENTS -->
+      <div class="tab-content-container">
+
+        <!-- TAB 1: STANDINGS -->
+        <div class="tab-pane active" id="tab-standings">
+          <div id="standings-grids" class="standings-grid-container">
+            <!-- Dynamically populated league standing tables -->
+          </div>
+        </div>
+
+        <!-- TAB 2: SCHEDULE (MATCH LIST) -->
+        <div class="tab-pane" id="tab-schedule">
+          <div class="schedule-toolbar board-card">
+            <div class="form-group filter-group">
+              <label for="filter-group-select">조 구분</label>
+              <select id="filter-group-select">
+                <option value="all">전체 보기</option>
+              </select>
+            </div>
+            <div class="form-group filter-group">
+              <label for="filter-status-select">경기 상태</label>
+              <select id="filter-status-select">
+                <option value="all">전체 경기</option>
+                <option value="pending">대기 중인 경기</option>
+                <option value="completed">종료된 경기</option>
+              </select>
+            </div>
+            <div class="form-group filter-group" style="flex: 2; min-width: 200px;">
+              <label for="search-team-input">팀 검색</label>
+              <input type="text" id="search-team-input" placeholder="학급/팀 이름 검색 (예: 1반)">
+            </div>
+          </div>
+
+          <div id="schedule-list" class="schedule-cards-list">
+            <!-- Dynamically populated matches -->
+          </div>
+        </div>
+
+        <!-- TAB 3: BRACKET -->
+        <div class="tab-pane" id="tab-bracket">
+          <div class="bracket-layout board-card">
+            <div class="bracket-header">
+              <h3>🏆 결선 토너먼트 대진표</h3>
+              <p id="bracket-subtitle">예선 리그 통과 팀들이 격돌합니다!</p>
+              <div id="bracket-generation-admin" class="admin-only" style="display: none; margin-bottom: 20px;">
+                <button id="generate-bracket-btn" class="btn btn-primary">⚡ 결선 토너먼트 대진표 만들기</button>
+                <p class="input-helper" style="margin-top: 5px; color: var(--primary);">※ 모든 예선 리그 경기가 종료된 후 클릭하여 토너먼트를 즉시 생성할 수 있습니다.</p>
+              </div>
+            </div>
+            <div class="bracket-wrapper">
+              <div id="bracket-tree" class="bracket-tree">
+                <!-- Dynamically populated tournament brackets -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 4: MANNERS STANDINGS (DYNAMIC SPECIAL AWARDS) -->
+        <div class="tab-pane" id="tab-manners">
+          <!-- Dynamic Highlights Row -->
+          <div id="special-highlights-row" class="special-highlights-grid" style="margin-bottom: 20px;">
+            <!-- Dynamically populated top team cards for each category -->
+          </div>
+          
+          <!-- Dynamic Standings Tables Grid -->
+          <div id="special-tables-grid" class="special-tables-grid">
+            <!-- Dynamically populated tables for each category -->
+          </div>
+        </div>
+
+      </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+      <p>© 2026 경기배정도우미 (Match Seeding Helper). Developed with School Green Board Aesthetics. Built for School Sports.</p>
+    </footer>
+
+  </div>
+
+  <!-- ADMIN PASSCODE MODAL -->
+  <div id="admin-passcode-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-box board-card modal-sm">
+      <div class="modal-header">
+        <h3>🔒 관리자 인증</h3>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p>경기를 관리하고 수정하려면 관리자 비밀번호를 입력해 주세요.</p>
+        <div class="form-group" style="margin-top: 15px;">
+          <input type="password" id="admin-password-input" class="text-center font-lg" placeholder="비밀번호 입력 (초기값: 0000)" autofocus>
+          <div id="login-error-msg" class="error-text" style="display: none; margin-top: 8px;">비밀번호가 올바르지 않습니다.</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline modal-cancel-btn">취소</button>
+        <button id="admin-login-submit" class="btn btn-primary">확인</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MATCH RESULT INPUT MODAL -->
+  <div id="match-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-box board-card">
+      <div class="modal-header">
+        <h3>📊 경기 결과 입력 및 편집</h3>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="modal-match-id">
+        
+        <div class="match-vs-header">
+          <div class="team-block text-right">
+            <span class="modal-group-name" id="modal-team-a-group">A조</span>
+            <div class="modal-team-name" id="modal-team-a-name">팀 A</div>
+          </div>
+          <div class="vs-text">VS</div>
+          <div class="team-block text-left">
+            <span class="modal-group-name" id="modal-team-b-group">A조</span>
+            <div class="modal-team-name" id="modal-team-b-name">팀 B</div>
+          </div>
+        </div>
+
+        <div class="modal-score-fields">
+          <div class="score-input-block">
+            <label for="modal-score-a">점수 / 득점</label>
+            <input type="number" id="modal-score-a" min="0" value="0">
+          </div>
+          <div class="vs-spacer"></div>
+          <div class="score-input-block">
+            <label for="modal-score-b">점수 / 득점</label>
+            <input type="number" id="modal-score-b" min="0" value="0">
+          </div>
+        </div>
+
+        <!-- Overtime / Penalty Shootout Block -->
+        <div id="modal-pso-block" class="settings-sub-block" style="display: none; margin-top: 15px; margin-bottom: 15px;">
+          <h4 style="font-size: 13px; font-weight: 700; color: var(--primary); margin-bottom: 4px;">⚽ 승부차기 / 연장전 점수 (선택)</h4>
+          <p class="input-helper" style="margin-bottom: 8px;">일반 경기 결과가 동점인 경우, 승부차기 또는 연장전 득점을 기록합니다.</p>
+          <div class="modal-score-fields" style="margin-bottom: 0;">
+            <div class="score-input-block">
+              <input type="number" id="modal-pso-a" min="0" placeholder="A팀 PK" style="height: 38px; font-size: 18px; width: 100px;">
+            </div>
+            <div class="vs-spacer" style="margin-top: 15px; width: 20px;"></div>
+            <div class="score-input-block">
+              <input type="number" id="modal-pso-b" min="0" placeholder="B팀 PK" style="height: 38px; font-size: 18px; width: 100px;">
+            </div>
+          </div>
+        </div>
+
+        <!-- Winner Overrides (mainly for Tournaments or Tie-breaks) -->
+        <div class="form-group" style="margin-top: 15px;">
+          <label>판정 및 최종 결과</label>
+          <div class="radio-tab-selector">
+            <label class="radio-tab">
+              <input type="radio" name="modal-winner-select" value="auto" checked>
+              <span>점수 기준 자동 판정</span>
+            </label>
+            <label class="radio-tab">
+              <input type="radio" name="modal-winner-select" value="draw">
+              <span>무승부</span>
+            </label>
+            <label class="radio-tab">
+              <input type="radio" name="modal-winner-select" value="a">
+              <span id="modal-winner-a-lbl">팀 A 승리</span>
+            </label>
+            <label class="radio-tab">
+              <input type="radio" name="modal-winner-select" value="b">
+              <span id="modal-winner-b-lbl">팀 B 승리</span>
+            </label>
+          </div>
+          <p class="input-helper">토너먼트는 무승부가 허용되지 않으므로, 동점일 경우 판정승 또는 승부차기 승리 팀을 직접 지정해야 합니다.</p>
+        </div>
+
+        <!-- Dynamic Special Scores Area -->
+        <div id="modal-special-scores-block" class="settings-sub-block" style="margin-top: 20px; display: none;">
+          <!-- Dynamically populated checkbox inputs -->
+        </div>
+
+        <!-- Match Schedule Details Edit -->
+        <div class="grid grid-3" style="margin-top: 20px;">
+          <div class="form-group">
+            <label for="modal-date">경기 일정/날짜</label>
+            <input type="text" id="modal-date" placeholder="예: 6월 24일, 예선1차">
+          </div>
+          <div class="form-group">
+            <label for="modal-time">시간</label>
+            <input type="text" id="modal-time" placeholder="예: 3교시, 11:20">
+          </div>
+          <div class="form-group">
+            <label for="modal-location">장소/코트</label>
+            <input type="text" id="modal-location" placeholder="예: 운동장A, 강당">
+          </div>
+        </div>
+
+      </div>
+      <div class="modal-footer justify-between">
+        <button id="modal-reset-match-btn" class="btn btn-danger btn-outline">🔄 경기 결과 취소 (대기 중 리셋)</button>
+        <div>
+          <button class="btn btn-outline modal-cancel-btn">취소</button>
+          <button id="modal-save-match-btn" class="btn btn-primary">💾 결과 저장</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- APPLICATION SETTINGS & SYNC MODAL -->
+  <div id="settings-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-box board-card modal-lg">
+      <div class="modal-header">
+        <h3>⚙️ 경기배정도우미 대시보드 관리 설정</h3>
+        <button class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        
+        <!-- SECTION 0: TOURNAMENT INFO EDIT -->
+        <div class="settings-section" style="margin-bottom: 25px; border-bottom: 1px solid rgba(0,0,0,0.06); padding-bottom: 25px;">
+          <h4>📝 대회 기본 정보 설정</h4>
+          <p class="subtitle">진행 중인 대회의 이름, 종목 및 특별 시상 부문을 실시간으로 수정합니다.</p>
+          <div class="grid grid-2">
+            <div class="form-group">
+              <label for="settings-title">대회 이름</label>
+              <input type="text" id="settings-title">
+            </div>
+            <div class="form-group">
+              <label for="settings-sport">경기 종목</label>
+              <input type="text" id="settings-sport">
+            </div>
+          </div>
+          <div class="form-group" style="margin-top: 10px;">
+            <label for="settings-special-input">특별 시상 부문 (쉼표로 구분)</label>
+            <input type="text" id="settings-special-input" placeholder="예: 질서 점수, 배려 점수, 벌점">
+            <p class="input-helper">비워두면 특별 점수 기능이 비활성화되며 순위표 탭이 숨겨집니다.</p>
+          </div>
+        </div>
+
+        <!-- SECTION 1: REMOTE SYNC -->
+        <div class="settings-section">
+          <h4>🌐 다중 기기 원격 동기화 (Server Sync)</h4>
+          <p class="subtitle">체육대회 운영진과 다수의 교실 TV 화면에 실시간으로 일정을 중계할 때 사용합니다.</p>
+          
+          <div class="form-group checkbox-group" style="margin-top: 15px;">
+            <label class="toggle-switch">
+              <input type="checkbox" id="settings-sync-toggle">
+              <span class="slider"></span>
+            </label>
+            <div class="checkbox-label-block">
+              <span class="checkbox-title">원격 서버 동기화 사용</span>
+              <span class="checkbox-desc">활성화 시 로컬 스토리지 대신 지정된 원격 서버 API와 통신하여 데이터를 가져오고 저장합니다.</span>
+            </div>
+          </div>
+
+          <div id="sync-details-block" class="settings-sub-block" style="display: none; margin-top: 15px;">
+            <div class="grid grid-2-1">
+              <div class="form-group">
+                <label for="settings-sync-url">서버 API URL</label>
+                <input type="url" id="settings-sync-url" placeholder="예: http://localhost:3000 또는 https://your-server.vercel.app">
+              </div>
+              <div class="form-group">
+                <label class="hide-mobile">&nbsp;</label>
+                <button type="button" id="settings-test-connection" class="btn btn-outline btn-block">연결 테스트</button>
+              </div>
+            </div>
+            
+            <div class="form-group" style="margin-top: 10px;">
+              <label for="settings-sync-code">고유 학교 코드 (School Code)</label>
+              <input type="text" id="settings-sync-code" placeholder="예: eum-dodge-2026 (다른 학교와 분리용)">
+              <p class="input-helper">서버를 여러 학교가 공동으로 사용하는 경우, 데이터를 따로 저장하기 위한 고유 코드를 입력하십시오. (영문, 숫자, 대시만 사용 가능)</p>
+            </div>
+            
+            <div id="connection-test-result" class="test-result-msg" style="margin-top: 8px;"></div>
+            
+            <!-- ADMIN PASSWORD CONFIGURATION -->
+            <div class="form-group" style="margin-top: 15px; border-top: 1px solid rgba(0,0,0,0.06); padding-top: 15px;">
+              <label>🔒 관리자 비밀번호 변경 (서버 및 로컬 공통)</label>
+              <div class="grid grid-3">
+                <input type="password" id="settings-old-password" placeholder="현재 비밀번호">
+                <input type="password" id="settings-new-password" placeholder="새 비밀번호">
+                <button type="button" id="settings-change-password-btn" class="btn btn-outline">비밀번호 변경 적용</button>
+              </div>
+              <div id="password-change-result" class="test-result-msg" style="margin-top: 8px;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 2: DATA BACKUP & RESTORE -->
+        <div class="settings-section" style="margin-top: 25px; border-top: 1px solid rgba(0,0,0,0.06); padding-top: 25px;">
+          <h4>💾 데이터 백업 및 복원</h4>
+          <p class="subtitle">모든 매치 데이터와 팀 설정을 로컬에 보관하거나 기존 백업에서 복구할 수 있습니다.</p>
+          <div class="grid grid-2" style="margin-top: 15px;">
+            <div class="backup-action-box text-center" style="display: flex; flex-direction: column; align-items: center; justify-content: space-between; gap: 8px;">
+              <h5>내보내기 (Backup)</h5>
+              <p class="input-helper">현재 설정과 경기 결과 데이터를 다운로드합니다.</p>
+              <button id="settings-export-btn" class="btn btn-outline" style="margin-top: 8px; width: 100%;">📥 JSON 백업 파일</button>
+              <button id="settings-export-excel-btn" class="btn btn-outline" style="width: 100%;">📊 Excel 결과 다운로드 (CSV)</button>
+            </div>
+            <div class="backup-action-box text-center">
+              <h5>가져오기 (Restore)</h5>
+              <p class="input-helper">이전에 내보낸 JSON 파일을 읽어 대시보드를 즉시 복원합니다.</p>
+              <input type="file" id="settings-import-file" accept=".json" style="display: none;">
+              <button id="settings-import-btn" class="btn btn-outline" style="margin-top: 15px;">📤 백업 파일 업로드</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 3: SYSTEM INITIALIZATION -->
+        <div class="settings-section" style="margin-top: 25px; border-top: 1px solid rgba(0,0,0,0.06); padding-top: 25px;">
+          <h4>🚨 시스템 초기화</h4>
+          <p class="subtitle">진행 중인 모든 매치 기록을 초기화하고 다시 설정 마법사로 돌아갑니다.</p>
+          <div class="warning-alert" style="margin-top: 10px;">
+            <strong>⚠️ 경고:</strong> 초기화하면 지금까지 입력한 경기 스코어 및 매너 점수를 포함한 모든 데이터가 복구 불가능하게 삭제됩니다. 백업본이 필요한 경우 먼저 내보내기를 실행하세요.
+          </div>
+          <button id="settings-reset-all-btn" class="btn btn-danger" style="margin-top: 15px;">🚨 모든 대회 데이터 완전히 리셋</button>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline modal-close-btn" style="min-width: 100px;">닫기</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
